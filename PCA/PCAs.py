@@ -139,7 +139,7 @@ def getdatamat(p):
     #return names,address,datamat
 
 
-
+'''
 #这个是训练的数据,训练的结果是一个给定的三个参数
 def train(p):
     names,address,datamat=getdatamat(p)
@@ -150,7 +150,7 @@ def train(p):
         meanVals.append(meanVal)
         redEigVects.append(redEigVect)
     return names,meanVals,redEigVects
-
+'''
 
 def accuracy():
     
@@ -172,10 +172,6 @@ def test(p,x):
     for i in range(len(distances)):
         if(distances[i]==min(distances)):
             J=i
-        
-    names[J]
-    
-    
     return names[J]
         
 
