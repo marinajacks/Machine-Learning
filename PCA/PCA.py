@@ -149,6 +149,7 @@ def covs(labels0,img):
         mats+=((b[i]-a).dot((b[i]-a).T))/(len(labels0)-1)
     #下面计算特征值和特征向量
     e,v=np.linalg.eig(mats)
+    A1=np.linalg.eigvals(mats)
     
     
     
@@ -194,6 +195,7 @@ def getPrincipal(e):
         I=I+1
     #这里计算出来的I实际上就是主成分发的个数,陆老师给出的数据
     #是25,这里计算得到的数据是26,其实是一样的.
+    
         
     
     
@@ -218,8 +220,32 @@ def  distances(labels,tlabels):
     return np.round(right/len(labels),2)
         
     
+
+
+
+
+import pandas as pd
+import os
+
+path="E://迅雷下载//IRIS.csv"
+
+pwd = os.getcwd()
+os.chdir(os.path.dirname(path))
+df = pd.read_csv(os.path.basename(path),header=None)
+os.chdir(pwd)
+
+
+
+
+import pandas as pd
+path="E://迅雷下载//IRIS.csv"
+df=pd.read_csv(path)
     
     
+
+'''下面对IRIS数据进行处理,得到想要的结果
+
+'''
     
 
 
