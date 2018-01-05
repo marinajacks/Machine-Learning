@@ -32,32 +32,6 @@ def loadflags(p):
     return flags
 
 
-#这部分是为了进行根据分类的结果进行划分的数据,返回了每一位数据的
-def getdatamat(p):
-    datamats=loadiris(p)
-    flags=loadflags(p)
-    names=[flags[0]]
-    
-    
-    for i in range(len(flags)):
-        if(flags[i] in names):
-            pass
-        else:
-            names.append(flags[i])
-    address=[]
-    datamat=[]
-    for i in range(len(names)):
-        address.append([])
-        datamat.append([])
-        
-    for i in range(len(flags)):
-        for j in range(len(names)):
-            if(flags[i]==names[j]):
-                address[j].append(i)
-                datamat[j].append(datamats[i])
-                
-    return names,address,datamat
-
 
     
 
@@ -106,7 +80,7 @@ def pca(dataMat,percentage=0.99):
     return lowDDataMat,reconMat
 '''
 
-
+#PCA的公式,主要是为了获取到一个
 def pcas(dataMat,percentage=0.99):
     meanVals=mean(dataMat,axis=0)  #对每一列求平均值，因为协方差的计算中需要减去均值
     meanRemoved=dataMat-meanVals
@@ -127,26 +101,82 @@ def diatance(vectors):
     
 
 
-    
-def main():
-    distances=[]
-    
-    #x=mat([4.5,2.3,1.3,0.5]).T
-    x=mat([6.4,3.2,5.3,2.5]).T
 
+
+
+#这部分是为了进行根据分类的结果进行划分的数据,返回了每一位数据的
+def getdatamat(p):
+    datamats=loadiris(p)
+    flags=loadflags(p)
+    names=[flags[0]]
+    
+    
+    for i in range(len(flags)):
+        if(flags[i] in names):
+            pass
+        else:
+            names.append(flags[i])
+    address=[]
+    datamat=[]
+    for i in range(len(names)):
+        address.append([])
+        datamat.append([])
+        
+    for i in range(len(flags)):
+        for j in range(len(names)):
+            if(flags[i]==names[j]):
+                address[j].append(i)
+                datamat[j].append(datamats[i])
+    
+    meanVals=[]
+    redEigVects=[]
     for i in range(len(datamat)):
-        meanVals,redEigVects=pcas(datamat[i],percentage=0.9)
-        dist=redEigVects.dot((redEigVects.T).dot((x-meanVals.T)))
-        distances.append(diatance(dist))
+        meanVal,redEigVect=pcas(datamat[i],percentage=0.9)
+        meanVals.append(meanVal)
+        redEigVects.append(redEigVect)
+    
+    return names,meanVals,redEigVects
+    #return names,address,datamat
+
+
+
+#这个是训练的数据,训练的结果是一个给定的三个参数
+def train(p):
+    names,address,datamat=getdatamat(p)
+    meanVals=[]
+    redEigVects=[]
+    for i in range(len(datamat)):
+        meanVal,redEigVect=pcas(datamat[i],percentage=0.9)
+        meanVals.append(meanVal)
+        redEigVects.append(redEigVect)
+    return names,meanVals,redEigVects
+
+
+def accuracy():
+    
     
 
-    distances
+p='E:\\project\\Machine-Learning\\PCA\\trainiris.txt'
+
+#单条数据的判定结果
+def test(p,x):
+    distances=[] #存储距离信息,便于后期寻找
+    x=mat(x).T
+    names,meanVals,redEigVects=getdatamat(p)
     
+    for i in range(len(redEigVects)):
+        dist=redEigVects[i].dot((redEigVects[i].T).dot((x-meanVals[i].T)))
+        distances.append(diatance(dist))
+        
     J=0
     for i in range(len(distances)):
         if(distances[i]==min(distances)):
             J=i
+        
     names[J]
+    
+    
+    return names[J]
         
 
     
