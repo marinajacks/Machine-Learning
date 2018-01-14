@@ -11,6 +11,7 @@ Created on Fri Jan  5 23:17:26 2018
 
 #coding=utf-8
 import numpy as np
+import matplotlib.pyplot as plt
 
 '''加载数据,主要是数据信息'''
 def loadiris(p):
@@ -47,7 +48,7 @@ def eigValPct(eigVals,percentage):
             return num
 
 '''PCA的公式,主要是为了获取到训练数据的均值,特征向量信息,这就是训练学习过程'''
-def pca(dataMat,percentage=0.9):
+def pca(dataMat,percentage):
     meanVals=np.mean(dataMat,axis=0)  #对每一列求平均值，因为协方差的计算中需要减去均值
     meanRemoved=dataMat-meanVals
     covMat=np.cov(meanRemoved,rowvar=0)  #cov()计算方差
@@ -68,7 +69,7 @@ def diatance(vectors):
 
 '''这部分是为了进行根据分类的结果进行划分的数据,返回了每一位数据的标签,均值和
 训练得到的主成分矩阵'''
-def train(p):
+def train(p,percentage):
     datamats=loadiris(p)
     flags=loadflags(p)
     names=[flags[0]]
@@ -93,17 +94,17 @@ def train(p):
     meanVals=[]
     redEigVects=[]
     for i in range(len(datamat)):
-        meanVal,redEigVect=pca(datamat[i],percentage=0.9)
+        meanVal,redEigVect=pca(datamat[i],percentage)
         meanVals.append(meanVal)
         redEigVects.append(redEigVect)
     
     return names,meanVals,redEigVects
 
 '''单条数据的判定结果,这里的单条数据是给定的一个数值'''
-def test(p,x):
+def test(p,x,percentage):
     distances=[] #存储距离信息,便于后期寻找
     x=np.mat(x).T
-    names,meanVals,redEigVects=train(p)
+    names,meanVals,redEigVects=train(p,percentage)
     
     for i in range(len(redEigVects)):
         dist=redEigVects[i].dot((redEigVects[i].T).dot((x-meanVals[i].T)))
@@ -117,13 +118,13 @@ def test(p,x):
 
 
 '''这个是计算的测试的准确度,'''
-def accuracy(p,p1):
+def accuracy(p,p1,percentage):
     initdata=loadiris(p1)
     initflag=loadflags(p1)
     
     testflag=[]
     for i in range(len(initdata)):
-        testflag.append(test(p,initdata[i]))
+        testflag.append(test(p,initdata[i],percentage))
         
     num=0
     right=0
@@ -132,15 +133,42 @@ def accuracy(p,p1):
         if(initflag[i]==testflag[i]):
             right+=1
     
-    percent = str(round(100*right/num,2))+'%'
+    percent = (round(100*right/num,2))
     return percent 
-            
+                
+    
+'''PCA的公式,主要是为了获取到训练数据的均值,特征向量信息,这就是训练学习过程'''
+def pcas(dataMat,percentage):
+    meanVals=np.mean(dataMat,axis=0)  #对每一列求平均值，因为协方差的计算中需要减去均值
+    meanRemoved=dataMat-meanVals
+    covMat=np.cov(meanRemoved,rowvar=0)  #np.cov()计算方差
+    eigVals,eigVects=np.linalg.eig(np.mat(covMat))  #利用numpy中寻找特征值和特征向量的模块linalg中的eig()方法
+    k=eigValPct(eigVals,percentage) #要达到方差的百分比percentage，需要前k个向量
+    eigValInd=np.argsort(eigVals)  #对特征值eigVals从小到大排序
+    eigValInd=eigValInd[:-(k+1):-1] #从排好序的特征值，从后往前取k个，这样就实现了特征值的从大到小排列
+    redEigVects=eigVects[:,eigValInd]   #返回排序后特征值对应的特征向量redEigVects（主成分）
+    lowDDataMat=meanRemoved*redEigVects #将原始数据投影到主成分上得到新的低维数据lowDDataMat
+    reconMat=(lowDDataMat*redEigVects.T)+meanVals   #得到重构数据reconMat
+    return lowDDataMat,reconMat
+
+
+
+    
     
     
 if __name__ == '__main__':
     p='E:\\project\\Machine-Learning\\PCA\\trainiris.txt'
     p1='E:\\project\\Machine-Learning\\PCA\\testtrain.txt'
-    print(accuracy(p,p1))
+    x=[]
+    y=[]
+    for i in range(100):
+        x.append(round(0.01*(i+1),2))
+        y.append(accuracy(p,p1,0.01*(i+1)))  
+        #print(accuracy(p,p1,0.05*(i+1)))
+    plt.axis([0,1,0,100])
+    plt.plot(x,y)
+    plt.xlabel('percentage')
+    plt.ylabel('test accuracy')
 
 
         
