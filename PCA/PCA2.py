@@ -13,7 +13,8 @@ Created on Mon Jan  1 14:04:01 2018
 import numpy as np
 import struct
 '''函数的标签给定的是默认的为0,也就是训练数据集,但实际上还有测试数据集,测试数据集就是
-给定的which不为0的时候'''
+给定的which不为0的时候,现在的情况是,给出的数据是这样的,不能实现的是直接进行相关的计算
+好的处理方式是,在每次结束的时候,直接将数据弄成行的格式即可'''
 def loadImageSet(which=0):
     print ("load image set")
     binfile=None
@@ -38,6 +39,12 @@ def loadImageSet(which=0):
 
     binfile.close()
     imgs=np.reshape(imgs,[imgNum,width,height])
+    
+    imgg=[]
+    for i in range(len(imgs)):
+        imgg.append(imgs[i].reshape([1,width*height])[0])
+    imgs=imgg
+    
     print ("load imgs finished")
     return imgs
 
@@ -73,11 +80,161 @@ if __name__=="__main__":
     #pu.showImgMatrix(imgs[0])
     labels=loadLabelSet()
     
+    testimgs=loadImageSet(which=1)
+    #import PlotUtil as pu
+    #pu.showImgMatrix(imgs[0])
+    testlabels=loadLabelSet(which=1)
+    
+p1='E:\project\Machine-Learning\PCA\Mnist\\5.txt'
+f=open(p1,'w')
+
+'''通过方差的百分比来计算将数据降到多少维是比较合适的，
+函数传入的参数是特征值和百分比percentage，返回需要降到的维度数num'''
+def eigValPct(eigVals,percentage):
+    sortArray=np.sort(eigVals) #使用numpy中的sort()对特征值按照从小到大排序
+    sortArray=sortArray[-1::-1] #特征值从大到小排序
+    arraySum=sum(sortArray) #数据全部的方差arraySum
+    tempSum=0
+    num=0
+    for i in sortArray:
+        tempSum+=i
+        num+=1
+        if tempSum>=arraySum*percentage:
+            return num
+
+'''PCA的公式,主要是为了获取到训练数据的均值,特征向量信息,这就是训练学习过程'''
+def pca(dataMat,percentage=0.95):
+    meanVals=np.mean(dataMat,axis=0)  #对每一列求平均值，因为协方差的计算中需要减去均值
+    meanRemoved=dataMat-meanVals
+    covMat=np.cov(meanRemoved,rowvar=0)  #cov()计算方差
+    eigVals,eigVects=np.linalg.eig(np.mat(covMat))  #利用numpy中寻找特征值和特征向量的模块linalg中的eig()方法
+    k=eigValPct(eigVals,percentage) #要达到方差的百分比percentage，需要前k个向量
+    eigValInd=np.argsort(eigVals)  #对特征值eigVals从小到大排序
+    eigValInd=eigValInd[:-(k+1):-1] #从排好序的特征值，从后往前取k个，这样就实现了特征值的从大到小排列
+    redEigVects=eigVects[:,eigValInd]   #返回排序后特征值对应的特征向量redEigVects（主成分）    
+    return np.mat(meanVals),redEigVects
+
+'''求距离的公式,使用欧式距离的计算方法来计算距离'''
+def diatance(vectors):
+    sum=0
+    for i in range(len(vectors)):
+        sum+=pow(vectors[i],2)
+    return np.sqrt(sum)    
+    
+    
+def train():
+    datamats=loadImageSet()
+    flags=loadLabelSet()
+    names=[flags[0]]
+    
+    for i in range(len(flags)):
+        if(flags[i] in names):
+            pass
+        else:
+            names.append(flags[i])
+    address=[]
+    datamat=[]
+    for i in range(len(names)):
+        address.append([])
+        datamat.append([])
+        
+    for i in range(len(flags)):
+        for j in range(len(names)):
+            if(flags[i]==names[j]):
+                address[j].append(i)
+                datamat[j].append(datamats[i])
+#实际上这里给的数据是不正常的,正确的数据存储是按照列存储的,现在的情况是
+#按照行存储的,这个数据需要调整才可以
+    meanVals=[]
+    redEigVects=[]
+    for i in range(len(datamat)):
+        meanVal,redEigVect=pca(np.mat(datamat[i]),percentage=0.95)
+        meanVals.append(meanVal)
+        redEigVects.append(redEigVect)
+    
+    return names,meanVals,redEigVects    
+  
+
+
+dataMat=np.mat(datamat[0])
+imgss=dataMat
+
+
+
+
+
+
+
+
+
+
+
+p1='E:\project\Machine-Learning\PCA\Mnist\\datass1.txt'
+f=open(p1,'w')
+for i in range(len(imgss)):
+    for j in range(len(imgss[i])):
+        f.write(str(imgss[i][j])+' ')
+    f.write('\n')
+f.close()
+
+
+    
+    
+def test(names,meanVals,redEigVects,x):
+   # distances=[] #存储距离信息,便于后期寻找
+    testflags=[]
+    for j in range(len(testlabels)):
+        distances=[]
+        x=np.mat(testimgs[j]).T
+        #names,meanVals,redEigVects=train()
+        
+        for i in range(len(redEigVects)):
+
+            dist=((redEigVects[i].T).dot((x-meanVals[i].T)))#+meanVals[i].T
+            #dist=redEigVects[i].dot((redEigVects[i].T).dot((x-meanVals[i].T)))
+            '''这里实际上是有两个问题的 '''
+            #+meanVals[i].T
+            distances.append(diatance(dist))
+            
+        J=0
+        for i in range(len(distances)):
+            if(distances[i]==min(distances)):
+                J=i
+        testflags.append(names[J])
+    #names[J]
+    return names[J]
+    
+    
+
+
+testlabels[0:9]
+
+test=testflags
+real=testlabels
+
+def right(test,real):
+    length=len(real)
+    
+    sum=0
+    for i in range(len(real)):
+        if(test[i]==real[i]):
+            sum=sum+1
+    
+    return np.round(sum/length,2)
+    
+    
+    
 
 def  test(i):
     print(' if(labels[i]=='+str(i)+'):')
     print('\tlabels'+str(i)+'.append(i)')
     
+
+
+
+
+
+
 
 def discriminant():
     #这个函数主要是为了判别数据的归属,为后续的数据进行判别
@@ -247,6 +404,10 @@ df=pd.read_csv(path)
 
 '''
     
+
+import numpy as np
+x= np.mat([[4,-1,-1,-1,-1,0,0,0],[-1,3,-1,0,0,-1,0,0],[-1,-1,3,-1,0,0,0,0],[-1,0,-1,3,0,0,0,-1],[-1,0,0,0,2,0,0,-1],[0,-1,0,0,0,2,-1,0],[0,0,0,0,0,-1,2,-1],[0,0,0,-1,-1,0,-1,3]])
+a,b=np.linalg.eig(x)
 
 
 
