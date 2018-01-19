@@ -69,7 +69,7 @@ def percentage(lables,lables1):
     for i in range(len(lables)):
         if(lables[i][0]==lables1[i]):
             sum+=1
-    return round(100*sum/length,2)
+    return str(round(100*sum/length,2))+'%'
 
 
 if __name__ == '__main__':
